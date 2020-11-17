@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
+    <PackageReference Include="RtspClientSharp" Version="1.3.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="BouncyCastle" Version="1.8.6.1" />
+    <PackageReference Include="Curve25519" Version="1.0.1" />
+    <PackageReference Include="Chaos.NaCl.Core" Version="1.0.0" />
+    <PackageReference Include="curve25519-pcl" Version="1.0.1" />
+    <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1" />
+    <PackageReference Include="LibVLCSharp" Version="3.4.3" />
+    <PackageReference Include="FFmpeg.AutoGen" Version="4.2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Aes128CounterMode.cs.txt" />
+    <None Remove="Tables\table_s1.bin" />
+    <None Remove="Tables\table_s10.bin" />
+    <None Remove="Tables\table_s2.bin" />
+    <None Remove="Tables\table_s3.bin" />
+    <None Remove="Tables\table_s4.bin" />
+    <None Remove="Tables\table_s5.bin" />
+    <None Remove="Tables\table_s6.bin" />
+    <None Remove="Tables\table_s7.bin" />
+    <None Remove="Tables\table_s8.bin" />
+    <None Remove="Tables\table_s9.bin" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Listeners\" />
+    <Folder Include="Models\" />
+    <Folder Include="Models\Enums\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Services\" />
+    <Folder Include="Crypto\" />
+    <Folder Include="DMapTagged\" />
+    <Folder Include="Resources\" />
+    <Folder Include="Decoders\" />
+    <Folder Include="Decoders\Implementations\" />
+    <Folder Include="Listeners\Bases\" />
+    <Folder Include="Models\TcpListeners\" />
+    <Folder Include="Models\Mirroring\" />
+    <Folder Include="Models\Audio\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Crypto\Aes128CounterMode.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Tables\table_s1.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\table_s1.bin" />
+    <EmbeddedResource Include="Resources\table_s10.bin" />
+    <EmbeddedResource Include="Resources\table_s2.bin" />
+    <EmbeddedResource Include="Resources\table_s3.bin" />
+    <EmbeddedResource Include="Resources\table_s4.bin" />
+    <EmbeddedResource Include="Resources\table_s5.bin" />
+    <EmbeddedResource Include="Resources\table_s6.bin" />
+    <EmbeddedResource Include="Resources\table_s7.bin" />
+    <EmbeddedResource Include="Resources\table_s8.bin" />
+    <EmbeddedResource Include="Resources\table_s9.bin" />
+  </ItemGroup>
+</Project>
