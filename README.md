@@ -19,7 +19,7 @@ All the resources in this repository are written using only opensource projects.
 The code and related resources are meant for educational purposes only.  
 I do not take any responsibility for the use that will be made of it.    
 
-## Credits
+## Credits
 
 Inspired by others AirPlay open source projects.  
 Big ty to OmgHax.c's author 😱. 
