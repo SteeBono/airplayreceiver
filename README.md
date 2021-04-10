@@ -13,8 +13,12 @@ I had compiled them for macOS. I haven't tried on Windows.
 I also wanted to point out that the code could be written better, but I had written it just for fun.  
 When I have a little more time, I'll fix it.  
 
+## Wiki
+  
+Here you will find an [Article](https://github.com/SteeBono/airplayreceiver/wiki) where I explain how the whole AirPlay 2 protocol works.
+  
 ## Disclamier
-
+  
 All the resources in this repository are written using only opensource projects.  
 The code and related resources are meant for educational purposes only.  
 I do not take any responsibility for the use that will be made of it.    
