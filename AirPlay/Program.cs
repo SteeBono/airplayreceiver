@@ -1,10 +1,17 @@
-﻿using AirPlay.Utils;
+﻿using AirPlay.Models.Configs;
+using AirPlay.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Plists;
 using System.Text;
 using System.Threading;
@@ -14,63 +21,55 @@ namespace AirPlay
 {
     public class Program
     {
-        private static CancellationTokenSource _cancellationTokenSource;
+        public static IConfigurationRoot Configuration;
 
         public static async Task Main(string[] args)
         {
-            _cancellationTokenSource = new CancellationTokenSource();
-
-            if(Directory.Exists("/Users/steebono/desktop/dump/frames"))
-                Directory.Delete("/Users/steebono/desktop/dump/frames", true);
-            if (Directory.Exists("/Users/steebono/desktop/dump/pcm"))
-                Directory.Delete("/Users/steebono/desktop/dump/pcm", true);
-            if (Directory.Exists("/Users/steebono/desktop/dump/out"))
-                Directory.Delete("/Users/steebono/desktop/dump/out", true);
-
-            Directory.CreateDirectory("/Users/steebono/desktop/dump/frames");
-            Directory.CreateDirectory("/Users/steebono/desktop/dump/pcm");
-            Directory.CreateDirectory("/Users/steebono/desktop/dump/out");
-
-            var deviceId = "11:22:33:44:55:66";
-
-            var receiver = new AirPlayReceiver("steebono-test-1", 5000, 7000);
-
-            await receiver.StartListeners(_cancellationTokenSource.Token);
-            await receiver.StartMdnsAsync(deviceId).ConfigureAwait(false);
-
-            receiver.OnSetVolumeReceived += (s, e) =>
-            {
-
-            };
-
-            receiver.OnH264DataReceived += (s, e) =>
-            {
-                // DO SOMETHING WITH VIDEO DATA..
-                using (FileStream _writer = new FileStream("/Users/steebono/Desktop/dump/dump.h264", FileMode.Append))
+            var builder = new HostBuilder()
+                .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    _writer.Write(e.Data, 0, e.Length);
-                }
-            };
+                    config.SetBasePath(Directory.GetCurrentDirectory());
 
-            var audiobuf = new List<byte>();
-            receiver.OnPCMDataReceived += (s, e) =>
-            {
-                // DO SOMETHING WITH AUDIO DATA..
-                audiobuf.AddRange(e.Data);
-            };
+                    var os = "win";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        os = "osx";
+                    }
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        os = "linux";
+                    }
 
-            Console.ReadKey();
+                    config.AddJsonFile($"appsettings_{os}.json", optional: false, reloadOnChange: false);
+                    config.AddEnvironmentVariables();
+                    if (args != null)
+                    {
+                        config.AddCommandLine(args);
+                    }
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddOptions();
 
-            using (var wr = new FileStream("/Users/steebono/Desktop/dump/dequeued.wav", FileMode.Create))
-            {
-                var header = Utilities.WriteWavHeader(2, 44100, 16, (uint)audiobuf.Count);
-                wr.Write(header, 0, header.Length);
-            }
+                    services.Configure<AirPlayReceiverConfig>(hostContext.Configuration.GetSection("AirPlayReceiver"));
+                    services.Configure<CodecLibrariesConfig>(hostContext.Configuration.GetSection("CodecLibraries"));
 
-            using (FileStream _writer = new FileStream("/Users/steebono/Desktop/dump/dequeued.wav", FileMode.Append))
-            {
-                _writer.Write(audiobuf.ToArray(), 0, audiobuf.Count);
-            }
+                    services.AddHostedService<AirPlayService>();
+                    services.AddSingleton(ctx =>
+                    {
+                        var config = ctx.GetService<IOptions<AirPlayReceiverConfig>>()?.Value ?? throw new ArgumentNullException("airplayreveicerconfig");
+                        var codecConfig = ctx.GetService<IOptions<CodecLibrariesConfig>>()?.Value ?? throw new ArgumentNullException("codeclibrariesconfig");
+
+                        return new AirPlayReceiver(config.Instance, codecConfig, config.AirTunesPort, config.AirPlayPort);
+                    });
+                })
+                .ConfigureLogging((hostContext, logging) =>
+                {
+                    logging.AddConfiguration(hostContext.Configuration.GetSection("Logging"));
+                    logging.AddConsole();
+                });
+
+            await builder.RunConsoleAsync();
         }
     }
 }

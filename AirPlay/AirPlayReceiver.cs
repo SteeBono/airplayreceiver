@@ -1,35 +1,39 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AirPlay.Listeners;
 using AirPlay.Models;
+using AirPlay.Models.Configs;
 using Makaretu.Dns;
 
 namespace AirPlay
 {
     public class AirPlayReceiver : IRtspReceiver
     {
+        public event EventHandler<decimal> OnSetVolumeReceived;
+        public event EventHandler<H264Data> OnH264DataReceived;
+        public event EventHandler<PcmData> OnPCMDataReceived;
+
+        public const string AirPlayType = "_airplay._tcp";
+        public const string AirTunesType = "_raop._tcp";
+
         private MulticastService _mdns = null;
         private AirTunesListener _airTunesListener = null;
         private string _instance = string.Empty;
         private ushort _airTunesPort;
         private ushort _airPlayPort;
 
-        public const string AirPlayType = "_airplay._tcp";
-        public const string AirTunesType = "_raop._tcp";
-
-        public event EventHandler<decimal> OnSetVolumeReceived;
-        public event EventHandler<H264Data> OnH264DataReceived;
-        public event EventHandler<PcmData> OnPCMDataReceived;
-
-        public AirPlayReceiver(string instance, ushort airTunesPort = 5000, ushort airPlayPort = 7000)
+        public AirPlayReceiver(string instance, CodecLibrariesConfig codecConfig, ushort airTunesPort = 5000, ushort airPlayPort = 7000)
         {
             _instance = instance;
             _airTunesPort = airTunesPort;
             _airPlayPort = airPlayPort;
 
-            _airTunesListener = new AirTunesListener(this, _airTunesPort, _airPlayPort);
+            _airTunesListener = new AirTunesListener(this, _airTunesPort, _airPlayPort, codecConfig);
         }
 
         public async Task StartListeners(CancellationToken cancellationToken)
@@ -56,10 +60,11 @@ namespace AirPlay
             _mdns = new MulticastService();
             var sd = new ServiceDiscovery(_mdns);
 
-#if DEBUG
-            foreach (var a in MulticastService.GetIPAddresses())
+            var ips = new List<IPAddress>();
+            foreach (var ip in MulticastService.GetIPAddresses())
             {
-                Console.WriteLine($"IP address {a}");
+                Console.WriteLine($"IP address {ip}");
+                ips.Add(ip);
             }
             _mdns.NetworkInterfaceDiscovered += (s, e) =>
             {
@@ -68,10 +73,11 @@ namespace AirPlay
                     Console.WriteLine($"NIC '{nic.Name}'");
                 }
             };
-#endif
+
+            var singleIp = ips.Where(i => i.ToString().Contains("192"));
 
             // Internally 'ServiceProfile' create the SRV record
-            var airTunes = new ServiceProfile($"{deviceIdInstance}@{_instance}", AirTunesType, _airTunesPort);
+            var airTunes = new ServiceProfile($"{deviceIdInstance}@{_instance}", AirTunesType, _airTunesPort, singleIp);
             airTunes.AddProperty("ch", "2");
             airTunes.AddProperty("cn", "2,3");
             airTunes.AddProperty("et", "0,3,5");
@@ -100,7 +106,7 @@ namespace AirPlay
              */
 
             // Internally 'ServiceProfile' create the SRV record
-            var airPlay = new ServiceProfile(_instance, AirPlayType, _airPlayPort);
+            var airPlay = new ServiceProfile(_instance, AirPlayType, _airPlayPort, singleIp);
             airPlay.AddProperty("deviceid", deviceId);
             airPlay.AddProperty("features", "0x5A7FFFF7,0x1E"); // 0x4A7FFFF7
             airPlay.AddProperty("flags", "0x4");

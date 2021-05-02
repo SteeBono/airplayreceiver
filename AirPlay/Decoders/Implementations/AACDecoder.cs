@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using AirPlay.Models.Enums;
 using AirPlay.Utils;
@@ -33,18 +34,23 @@ namespace AirPlay
 
         public AudioFormat Type => _audioObjectType == AudioObjectType.AOT_ER_AAC_ELD ? AudioFormat.AAC_ELD : AudioFormat.AAC;
 
-        public AACDecoder(TransportType transportFmt, AudioObjectType audioObjectType, uint nrOfLayers)
+        public AACDecoder(string libraryPath, TransportType transportFmt, AudioObjectType audioObjectType, uint nrOfLayers)
         {
             // Open library
-            _handle = LibraryLoader.dlopen("/usr/local/lib/libfdk-aac.dylib", 0);
+            if (!File.Exists(libraryPath))
+            {
+                throw new IOException("Library not found.");
+            }
+
+            _handle = LibraryLoader.DlOpen(libraryPath, 0);
 
             // Get function pointers symbols
-            IntPtr symAacDecoder_Open = LibraryLoader.dlsym(_handle, "aacDecoder_Open");
-            IntPtr symAacDecoder_ConfigRaw = LibraryLoader.dlsym(_handle, "aacDecoder_ConfigRaw");
-            IntPtr sysAacDecoder_GetStreamInfo = LibraryLoader.dlsym(_handle, "aacDecoder_GetStreamInfo");
-            IntPtr sysAacDecoder_Fill = LibraryLoader.dlsym(_handle, "aacDecoder_Fill");
-            IntPtr sysAacDecoder_DecodeFrame = LibraryLoader.dlsym(_handle, "aacDecoder_DecodeFrame");
-            IntPtr sysAacDecoder_Close = LibraryLoader.dlsym(_handle, "aacDecoder_Close");
+            IntPtr symAacDecoder_Open = LibraryLoader.DlSym(_handle, "aacDecoder_Open");
+            IntPtr symAacDecoder_ConfigRaw = LibraryLoader.DlSym(_handle, "aacDecoder_ConfigRaw");
+            IntPtr sysAacDecoder_GetStreamInfo = LibraryLoader.DlSym(_handle, "aacDecoder_GetStreamInfo");
+            IntPtr sysAacDecoder_Fill = LibraryLoader.DlSym(_handle, "aacDecoder_Fill");
+            IntPtr sysAacDecoder_DecodeFrame = LibraryLoader.DlSym(_handle, "aacDecoder_DecodeFrame");
+            IntPtr sysAacDecoder_Close = LibraryLoader.DlSym(_handle, "aacDecoder_Close");
 
             // Get delegates for the function pointers
             _aacDecoder_Open = Marshal.GetDelegateForFunctionPointer<aacDecoder_Open>(symAacDecoder_Open);
@@ -101,7 +107,7 @@ namespace AirPlay
         public void Dispose()
         {
             _aacDecoder_Close(_decoder);
-            LibraryLoader.dlclose(_handle);
+            LibraryLoader.DlClose(_handle);
             Marshal.FreeBSTR(_handle);
         }
 

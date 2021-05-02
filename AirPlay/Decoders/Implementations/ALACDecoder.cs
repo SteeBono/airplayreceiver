@@ -25,14 +25,14 @@ namespace AirPlay
 
         public AudioFormat Type => AudioFormat.ALAC;
 
-        public ALACDecoder()
+        public ALACDecoder(string libraryPath)
         {
             // Open library
-            _handle = LibraryLoader.dlopen("/usr/local/lib/libalac.dylib", 0);
+            _handle = LibraryLoader.DlOpen(libraryPath, 0);
 
             // Get a function pointer symbol
-            IntPtr symAlacDecoder_InitializeDecoder = LibraryLoader.dlsym(_handle, "InitializeDecoder");
-            IntPtr symAlacDecoder_DecodeFrame = LibraryLoader.dlsym(_handle, "Decode");
+            IntPtr symAlacDecoder_InitializeDecoder = LibraryLoader.DlSym(_handle, "InitializeDecoder");
+            IntPtr symAlacDecoder_DecodeFrame = LibraryLoader.DlSym(_handle, "Decode");
 
             // Get a delegate for the function pointer
             _alacDecoder_InitializeDecoder = Marshal.GetDelegateForFunctionPointer<alacDecoder_InitializeDecoder>(symAlacDecoder_InitializeDecoder);
@@ -74,7 +74,7 @@ namespace AirPlay
         public void Dispose()
         {
             // Close the C++ library
-            LibraryLoader.dlclose(_handle);
+            LibraryLoader.DlClose(_handle);
             Marshal.FreeBSTR(_handle);
         }
     }

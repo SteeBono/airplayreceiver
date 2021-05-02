@@ -14,10 +14,6 @@ namespace AirPlay.Utils
             {
                 LoadPosixLibrary();
             }
-            else
-            {
-                // LoadWindowsLibrary();
-            }
         }
 
         static void LoadPosixLibrary()
@@ -63,16 +59,68 @@ namespace AirPlay.Utils
             throw new Exception("dlopen failed: unable to locate library " + libFile + ". Searched: " + paths.Aggregate((a, b) => a + "; " + b));
         }
 
-        [DllImport("libdl")]
-        public static extern IntPtr dlopen(string fileName, int flags);
+        public static IntPtr DlOpen(string fileName, int flags)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX || (int)Environment.OSVersion.Platform == 128)
+            {
+                return dlopen(fileName, flags);
+            }
+            else
+            {
+                var dllHandle = LoadLibrary(fileName);
+                if (dllHandle == IntPtr.Zero)
+                {
+                    // Code 193 - Win32 dll on Win64 error
+                    // Code 162 - Dependecy libraries not found
+                    throw new Exception(Marshal.GetLastWin32Error().ToString());
+                }
+                
+                return dllHandle;
+            }
+        }
+
+        public static IntPtr DlSym(IntPtr handle, string symbol)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX || (int)Environment.OSVersion.Platform == 128)
+            {
+                return dlsym(handle, symbol);
+            }
+            else
+            {
+                return GetProcAddress(handle, symbol);
+            }
+        }
+
+        public static IntPtr DlClose (IntPtr handle)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX || (int)Environment.OSVersion.Platform == 128)
+            {
+                return dlclose(handle);
+            }
+            else
+            {
+                return FreeLibrary(handle);
+            }
+        }
+        [DllImport("kernel32.dll", EntryPoint = "LoadLibrary", SetLastError = true)]
+        private static extern IntPtr LoadLibrary(string filename);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetProcAddress(IntPtr handle, string symbol);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr FreeLibrary(IntPtr handle);
 
         [DllImport("libdl")]
-        public static extern IntPtr dlerror();
+        private static extern IntPtr dlopen(string fileName, int flags);
 
         [DllImport("libdl")]
-        public static extern IntPtr dlsym(IntPtr handle, string symbol);
+        private static extern IntPtr dlerror();
 
         [DllImport("libdl")]
-        public static extern IntPtr dlclose(IntPtr handle);
+        private static extern IntPtr dlsym(IntPtr handle, string symbol);
+
+        [DllImport("libdl")]
+        private static extern IntPtr dlclose(IntPtr handle);
     }
 }

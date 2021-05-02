@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AirPlay.Models;
+using AirPlay.Models.Configs;
 using AirPlay.Models.Enums;
 using AirPlay.Services.Implementations;
 using AirPlay.Utils;
@@ -37,10 +38,13 @@ namespace AirPlay.Listeners
         private RaopBuffer _raopBuffer;
         private Socket _cSocket;
 
-        public AudioListener(IRtspReceiver receiver, string sessionId, ushort cport, ushort dport) : base(cport, dport)
+        private readonly CodecLibrariesConfig _config;
+
+        public AudioListener(IRtspReceiver receiver, string sessionId, ushort cport, ushort dport, CodecLibrariesConfig config) : base(cport, dport)
         {
             _receiver = receiver;
             _sessionId = sessionId;
+            _config = config;
 
             _raopBuffer = RaopBufferInit();
             _aesCbcDecrypt = CipherUtilities.GetCipher("AES/CBC/NoPadding");
@@ -489,7 +493,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new ALACDecoder();
+                _decoder = new ALACDecoder(_config.ALACLibPath);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else if (audioFormat == AudioFormat.AAC)
@@ -502,7 +506,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new AACDecoder(TransportType.TT_MP4_RAW, AudioObjectType.AOT_AAC_MAIN, 1);
+                _decoder = new AACDecoder(_config.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_AAC_MAIN, 1);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else if(audioFormat == AudioFormat.AAC_ELD)
@@ -515,7 +519,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new AACDecoder(TransportType.TT_MP4_RAW, AudioObjectType.AOT_ER_AAC_ELD, 1);
+                _decoder = new AACDecoder(_config.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_ER_AAC_ELD, 1);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else
