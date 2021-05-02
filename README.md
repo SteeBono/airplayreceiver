@@ -3,16 +3,67 @@ Open source implementation of AirPlay 2 Mirroring / Audio protocol in C# .Net Co
 
 ## Generic
 
-I will post more information about the project soon.  
 Tested on macOS with iPhone 12 Pro iOS14.  
   
 The project is fully functional, but the AAC and ALAC libraries written in C ++ must be built.  
   
-I had compiled them for macOS. I haven't tried on Windows.  
-  
-I also wanted to point out that the code could be written better, but I had written it just for fun.  
-When I have a little more time, I'll fix it.  
+## How To
 
+### Build AAC Codec
+To download, build and install fdk-aac do the following:  
+  
+Clone the repository and cd into the folder:  
+```
+$ git clone https://github.com/mstorsjo/fdk-aac.git
+$ cd fdk-aac
+```
+  
+Configure the build and make the library:  
+```
+$ autoreconf -fi
+$ ./configure
+$ make
+```
+  
+### Build ALAC Codec
+To download, build and install alac do the following:  
+  
+Clone the repository and cd into the folder:  
+```
+$ git clone https://github.com/mikebrady/alac.git
+$ cd alac
+```
+  
+Download and paste 'GiteKat''s files in 'alac/codec' folder cloned before
+```
+$ https://github.com/GiteKat/LibALAC/tree/master/LibALAC
+```
+  
+The 'mikebrady''s source code does not contains 'extern' keyword.
+We need external linkage so we use 'GiteKat''s source code files.
+  
+Configure the build and make the library:  
+```
+$ autoreconf -fi
+$ ./configure
+$ make
+```
+  
+### Linux
+On terminal type 'apt-get install build-essential autoconf automake libtool' to install build tools
+Add compiled DLL path into 'appsettings_linux.json' file.  
+  
+### MacOS
+On terminal type 'brew install autoconf automake libtool' to install build tools
+Add compiled DLL path into 'appsettings_osx.json' file.  
+  
+### Windows
+
+Use [this](http://www.gaia-gis.it/gaia-sins/mingw64_how_to.html#env) tutorial to understand how to compile source code on Windows.  
+You need MinGW32 or MinGW64 based on arch.  
+
+Add compiled DLL path into 'appsettings_win.json' file.  
+  
 ## Wiki
   
 Here you will find an [Article](https://github.com/SteeBono/airplayreceiver/wiki) where I explain how the whole AirPlay 2 protocol works.
