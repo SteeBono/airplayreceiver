@@ -7,8 +7,8 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
+    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;DUMP</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -24,7 +24,6 @@
     <PackageReference Include="Curve25519" Version="1.0.1" />
     <PackageReference Include="Chaos.NaCl.Core" Version="1.0.0" />
     <PackageReference Include="curve25519-pcl" Version="1.0.1" />
-    <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1" />
   </ItemGroup>
 
   <ItemGroup>

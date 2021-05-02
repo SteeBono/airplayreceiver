@@ -12,6 +12,7 @@ namespace AirPlay.Utils
         {
             if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX || (int)Environment.OSVersion.Platform == 128)
             {
+                // Theoretically needed only w/ linux
                 LoadPosixLibrary();
             }
         }
@@ -56,7 +57,14 @@ namespace AirPlay.Utils
                 }
             }
 
-            throw new Exception("dlopen failed: unable to locate library " + libFile + ". Searched: " + paths.Aggregate((a, b) => a + "; " + b));
+            if (!isOsx)
+            {
+                // Throw exception only with linux platform
+                // OSX should works without libdl preload
+                var error = "dlopen failed: unable to locate library " + libFile + ". Searched: " + paths.Aggregate((a, b) => a + "; " + b);
+                Console.WriteLine(error);
+                throw new Exception(error);
+            }
         }
 
         public static IntPtr DlOpen(string fileName, int flags)
@@ -70,9 +78,11 @@ namespace AirPlay.Utils
                 var dllHandle = LoadLibrary(fileName);
                 if (dllHandle == IntPtr.Zero)
                 {
-                    // Code 193 - Win32 dll on Win64 error
+                    var error = Marshal.GetLastWin32Error().ToString();
+                    // Code 193 - Arch error / ex: Win32 dll on Win64 error
                     // Code 162 - Dependecy libraries not found
-                    throw new Exception(Marshal.GetLastWin32Error().ToString());
+                    Console.WriteLine($"Error 'LoadLibrary': {error}");
+                    throw new Exception(error);
                 }
                 
                 return dllHandle;
@@ -102,6 +112,9 @@ namespace AirPlay.Utils
                 return FreeLibrary(handle);
             }
         }
+
+        // Used w/ Win32 & Win64
+
         [DllImport("kernel32.dll", EntryPoint = "LoadLibrary", SetLastError = true)]
         private static extern IntPtr LoadLibrary(string filename);
 
@@ -110,6 +123,8 @@ namespace AirPlay.Utils
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr FreeLibrary(IntPtr handle);
+
+        // Used w/ OSX & Linux
 
         [DllImport("libdl")]
         private static extern IntPtr dlopen(string fileName, int flags);

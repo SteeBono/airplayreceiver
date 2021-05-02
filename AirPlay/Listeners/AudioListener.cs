@@ -296,15 +296,13 @@ namespace AirPlay.Listeners
 
             Array.Copy(data, 12 + encryptedlen, raw, encryptedlen, payloadsize - encryptedlen);
 
-            //Console.WriteLine($"RAW: {raw.Length}");
-
+#if DUMP
             /* RAW -> DUMP */
             File.WriteAllBytes($"/Users/steebono/Desktop/dump/frames/raw_{seqnum}", raw);
-
+#endif
             /* RAW -> PCM */
             var length = _decoder.GetOutputStreamLength();
             var output = new byte[length];
-            //Console.WriteLine($"STL: {length}");
 
             var res = _decoder.DecodeFrame(raw, ref output, length);
             if (res != 0)
@@ -313,12 +311,12 @@ namespace AirPlay.Listeners
                 Console.WriteLine($"Decoding error. Decoder: {_decoder.Type} Code: {res}");
             }
 
-            //Console.WriteLine($"RES: {res}");
-            //Console.WriteLine($"PCM: {output.Length}");
-            //Console.WriteLine($"LNG: {length}");
-
+#if DUMP
+            Console.WriteLine($"RES: {res}");
+            Console.WriteLine($"PCM: {output.Length}");
+            Console.WriteLine($"LNG: {length}");
             File.WriteAllBytes($"/Users/steebono/Desktop/dump/pcm/raw_{seqnum}", output);
-
+#endif
             Array.Copy(output, 0, entry.AudioBuffer, 0, output.Length);
             entry.AudioBufferLen = output.Length;
 

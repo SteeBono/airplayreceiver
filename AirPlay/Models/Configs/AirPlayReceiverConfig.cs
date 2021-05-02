@@ -9,5 +9,6 @@ namespace AirPlay.Models.Configs
         public string Instance { get; set; }
         public ushort AirTunesPort { get; set; }
         public ushort AirPlayPort { get; set; }
+        public string DeviceMacAddress { get; set; }
     }
 }

@@ -1,19 +1,12 @@
 ﻿using AirPlay.Models.Configs;
-using AirPlay.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Plists;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -60,7 +53,7 @@ namespace AirPlay
                         var config = ctx.GetService<IOptions<AirPlayReceiverConfig>>()?.Value ?? throw new ArgumentNullException("airplayreveicerconfig");
                         var codecConfig = ctx.GetService<IOptions<CodecLibrariesConfig>>()?.Value ?? throw new ArgumentNullException("codeclibrariesconfig");
 
-                        return new AirPlayReceiver(config.Instance, codecConfig, config.AirTunesPort, config.AirPlayPort);
+                        return new AirPlayReceiver(config.Instance, codecConfig, config.AirTunesPort, config.AirPlayPort, config.DeviceMacAddress);
                     });
                 })
                 .ConfigureLogging((hostContext, logging) =>
@@ -69,6 +62,25 @@ namespace AirPlay
                     logging.AddConsole();
                 });
 
+#if DUMP
+            // Replace '/Users/steebono/Desktop/dump/' in all source codes w/ your path
+            if (!Directory.Exists("/Users/steebono/Desktop/dump/"))
+            {
+                Directory.CreateDirectory("/Users/steebono/Desktop/dump/");
+            }
+            if (!Directory.Exists("/Users/steebono/Desktop/dump/frames/"))
+            {
+                Directory.CreateDirectory("/Users/steebono/Desktop/dump/frames/");
+            }
+            if (!Directory.Exists("/Users/steebono/Desktop/dump/out/"))
+            {
+                Directory.CreateDirectory("/Users/steebono/Desktop/dump/out/");
+            }
+            if (!Directory.Exists("/Users/steebono/Desktop/dump/pcm/"))
+            {
+                Directory.CreateDirectory("/Users/steebono/Desktop/dump/pcm/");
+            }
+#endif
             await builder.RunConsoleAsync();
         }
     }

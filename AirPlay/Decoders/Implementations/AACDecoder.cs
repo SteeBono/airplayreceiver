@@ -36,12 +36,12 @@ namespace AirPlay
 
         public AACDecoder(string libraryPath, TransportType transportFmt, AudioObjectType audioObjectType, uint nrOfLayers)
         {
-            // Open library
             if (!File.Exists(libraryPath))
             {
                 throw new IOException("Library not found.");
             }
 
+            // Open library
             _handle = LibraryLoader.DlOpen(libraryPath, 0);
 
             // Get function pointers symbols

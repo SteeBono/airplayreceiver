@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using AirPlay.Models.Enums;
 using AirPlay.Utils;
@@ -27,6 +28,11 @@ namespace AirPlay
 
         public ALACDecoder(string libraryPath)
         {
+            if (!File.Exists(libraryPath))
+            {
+                throw new IOException("Library not found.");
+            }
+
             // Open library
             _handle = LibraryLoader.DlOpen(libraryPath, 0);
 

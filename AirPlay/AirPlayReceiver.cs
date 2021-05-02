@@ -23,15 +23,17 @@ namespace AirPlay
 
         private MulticastService _mdns = null;
         private AirTunesListener _airTunesListener = null;
-        private string _instance = string.Empty;
-        private ushort _airTunesPort;
-        private ushort _airPlayPort;
+        private readonly string _instance = string.Empty;
+        private readonly ushort _airTunesPort;
+        private readonly ushort _airPlayPort;
+        private readonly string _deviceId;
 
-        public AirPlayReceiver(string instance, CodecLibrariesConfig codecConfig, ushort airTunesPort = 5000, ushort airPlayPort = 7000)
+        public AirPlayReceiver(string instance, CodecLibrariesConfig codecConfig, ushort airTunesPort = 5000, ushort airPlayPort = 7000, string macAddress = "11:22:33:44:55:66")
         {
             _instance = instance;
             _airTunesPort = airTunesPort;
             _airPlayPort = airPlayPort;
+            _deviceId = macAddress;
 
             _airTunesListener = new AirTunesListener(this, _airTunesPort, _airPlayPort, codecConfig);
         }
@@ -41,18 +43,18 @@ namespace AirPlay
             await _airTunesListener.StartAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public Task StartMdnsAsync(string deviceId)
+        public Task StartMdnsAsync()
         {
-            if(string.IsNullOrWhiteSpace(deviceId))
+            if (string.IsNullOrWhiteSpace(_deviceId))
             {
-                throw new ArgumentNullException(deviceId);
+                throw new ArgumentNullException(_deviceId);
             }
 
             var rDeviceId = new Regex("^(([0-9a-fA-F][0-9a-fA-F]):){5}([0-9a-fA-F][0-9a-fA-F])$");
-            var mDeviceId = rDeviceId.Match(deviceId);
+            var mDeviceId = rDeviceId.Match(_deviceId);
             if (!mDeviceId.Success)
             {
-                throw new ArgumentException("Device id must be a mac address", deviceId);
+                throw new ArgumentException("Device id must be a mac address", _deviceId);
             }
 
             var deviceIdInstance = string.Join(string.Empty, mDeviceId.Groups[2].Captures) + mDeviceId.Groups[3].Value;
@@ -60,12 +62,11 @@ namespace AirPlay
             _mdns = new MulticastService();
             var sd = new ServiceDiscovery(_mdns);
 
-            var ips = new List<IPAddress>();
             foreach (var ip in MulticastService.GetIPAddresses())
             {
                 Console.WriteLine($"IP address {ip}");
-                ips.Add(ip);
             }
+
             _mdns.NetworkInterfaceDiscovered += (s, e) =>
             {
                 foreach (var nic in e.NetworkInterfaces)
@@ -74,10 +75,8 @@ namespace AirPlay
                 }
             };
 
-            var singleIp = ips.Where(i => i.ToString().Contains("192"));
-
             // Internally 'ServiceProfile' create the SRV record
-            var airTunes = new ServiceProfile($"{deviceIdInstance}@{_instance}", AirTunesType, _airTunesPort, singleIp);
+            var airTunes = new ServiceProfile($"{deviceIdInstance}@{_instance}", AirTunesType, _airTunesPort);
             airTunes.AddProperty("ch", "2");
             airTunes.AddProperty("cn", "2,3");
             airTunes.AddProperty("et", "0,3,5");
@@ -106,8 +105,8 @@ namespace AirPlay
              */
 
             // Internally 'ServiceProfile' create the SRV record
-            var airPlay = new ServiceProfile(_instance, AirPlayType, _airPlayPort, singleIp);
-            airPlay.AddProperty("deviceid", deviceId);
+            var airPlay = new ServiceProfile(_instance, AirPlayType, _airPlayPort);
+            airPlay.AddProperty("deviceid", _deviceId);
             airPlay.AddProperty("features", "0x5A7FFFF7,0x1E"); // 0x4A7FFFF7
             airPlay.AddProperty("flags", "0x4");
             airPlay.AddProperty("model", "AppleTV5,3");
