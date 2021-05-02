@@ -195,18 +195,25 @@ $ make
 ```
   
 ### Linux
-On terminal type 'apt-get install build-essential autoconf automake libtool' to install build tools
+On terminal type the follow to install build tools  
+```
+apt-get install build-essential autoconf automake libtool
+```
 Add compiled DLL path into 'appsettings_linux.json' file.  
   
 ### MacOS
-On terminal type 'brew install autoconf automake libtool' to install build tools
+On terminal type the follow to install build tools  
+
+```
+brew install autoconf automake libtool
+```
 Add compiled DLL path into 'appsettings_osx.json' file.  
   
 ### Windows
 
-Use [this](http://www.gaia-gis.it/gaia-sins/mingw64_how_to.html#env) tutorial to understand how to compile source code on Windows.  
+Use [this](http://www.gaia-gis.it/gaia-sins/mingw64_how_to.html#env) tutorial to understand how to install build tools and how to compile source code on Windows.  
 You need MinGW32 or MinGW64 based on arch.  
-
+  
 Add compiled DLL path into 'appsettings_win.json' file.  
   
 ## Wiki
