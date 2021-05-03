@@ -214,8 +214,22 @@ Add compiled DLL path into 'appsettings_osx.json' file.
 Use [this](http://www.gaia-gis.it/gaia-sins/mingw64_how_to.html#env) tutorial to understand how to install build tools and how to compile source code on Windows.  
 You need MinGW32 or MinGW64 based on arch.  
   
+Put repo folders inside msys64 home folder ('C:\msys64\home\').  
+![homefolder](https://user-images.githubusercontent.com/11635557/116857182-b0b9b180-abfc-11eb-8e75-5d1b23d7541f.PNG)
+  
+Start an mingw32.exe or mingw64.exe shell based on arch and execute commands.  
+![mingwshell](https://user-images.githubusercontent.com/11635557/116857648-756bb280-abfd-11eb-8d6b-43d474f4a27b.PNG)
+  
+The compiled dll will be saved in 'C:\\msys64\\home\\username\\fdk-aac-master\\.libs\\'.  
 Add compiled DLL path into 'appsettings_win.json' file.  
   
+TIP 1: If the ALAC library gives you an error during the compilation try to insert the following arguments in the 'makefile.am' file:
+```
+libalac_la_LDFLAGS = -version-info @ALAC_VERSION@ -no-undefined -static-libgcc -static-libstdc++
+```
+TIP 2: If the error code 126 appears when loading the dll, try to import all the dlls located in the C:\msys64\bin\ folder into the bin folder of the project.  
+TIP 3: If the error code 193 appears when loading the dll, it means that you are trying to load a dll with the wrong architecture, so you have to compile the dll with the other mingwXX.exe.  
+   
 ## Wiki
   
 Here you will find an [Article](https://github.com/SteeBono/airplayreceiver/wiki) where I explain how the whole AirPlay 2 protocol works.
