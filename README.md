@@ -249,7 +249,7 @@ Big ty to OmgHax.c's author 😱.
 
 If you appreciate my work, consider buying me a cup of coffee to keep me recharged 🥲  
   
-BTC: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q
-BCH: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q
-ETH: 0xa0fdaab74f47e542126d9982c2b56d6b21e6e3aa (ERC20)
-ADA: DdzFFzCqrht5PG5QhMJKUL9mttEuFeCuwyGr8RSBic68qKpinxyKM5rw3cbE3jEC15Ld9WKkjcHTn64WWFsvKxwr3oRtGTuuXobvH2wS
+BTC: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q  
+BCH: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q  
+ETH: 0xa0fdaab74f47e542126d9982c2b56d6b21e6e3aa (ERC20)  
+ADA: DdzFFzCqrht5PG5QhMJKUL9mttEuFeCuwyGr8RSBic68qKpinxyKM5rw3cbE3jEC15Ld9WKkjcHTn64WWFsvKxwr3oRtGTuuXobvH2wS  
