@@ -232,7 +232,7 @@ TIP 3: If the error code 193 appears when loading the dll, it means that you are
    
 ## Wiki
   
-Here you will find an [Article](https://github.com/SteeBono/airplayreceiver/wiki) where I explain how the whole AirPlay 2 protocol works.
+Here you will find an [Article](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) where I explain how the whole AirPlay 2 protocol works.
   
 ## Disclamier
   
