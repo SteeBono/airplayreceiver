@@ -247,9 +247,12 @@ Big ty to OmgHax.c's author 😱.
 
 ## If you want support me 🔥
 
-If you appreciate my work, consider buying me a cup of coffee to keep me recharged 🥲  
+If you appreciate my work, consider buying me a cup of coffee to keep me recharged ☕
+  
+<a href="https://www.buymeacoffee.com/stfno.me" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-3.svg" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+  
+... or ... crypto ...
   
 BTC: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q  
 BCH: 1BXhfC5U75G2H8b99wk5AedGFxtqJ6xf8q  
 ETH: 0x4Fc12c7C71C581aBc77945Ab9cFBA8DF9692b713 (ERC20)  
-ADA: DdzFFzCqrht5PG5QhMJKUL9mttEuFeCuwyGr8RSBic68qKpinxyKM5rw3cbE3jEC15Ld9WKkjcHTn64WWFsvKxwr3oRtGTuuXobvH2wS  
