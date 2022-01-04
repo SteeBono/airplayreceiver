@@ -1,4 +1,5 @@
 ﻿using AirPlay.Models.Configs;
+using AirPlay.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +20,20 @@ namespace AirPlay
 
         public static async Task Main(string[] args)
         {
+            // DUMP WAV AUDIO
+            //var dir = Directory.GetFiles("dump/pcm");
+            //var _audiobuf = dir.SelectMany(d => File.ReadAllBytes(d)).ToList();
+            //using (var wr = new FileStream("dump/dequeued.wav", FileMode.Create))
+            //{
+            //    var header = Utilities.WriteWavHeader(2, 44100, 16, (uint)_audiobuf.Count);
+            //    wr.Write(header, 0, header.Length);
+            //}
+
+            //using (FileStream _writer = new FileStream("dump/dequeued.wav", FileMode.Append))
+            //{
+            //    _writer.Write(_audiobuf.ToArray(), 0, _audiobuf.Count);
+            //}
+
             var builder = new HostBuilder()
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
@@ -46,15 +62,11 @@ namespace AirPlay
 
                     services.Configure<AirPlayReceiverConfig>(hostContext.Configuration.GetSection("AirPlayReceiver"));
                     services.Configure<CodecLibrariesConfig>(hostContext.Configuration.GetSection("CodecLibraries"));
+                    services.Configure<DumpConfig>(hostContext.Configuration.GetSection("Dump"));
+
+                    services.AddSingleton<IAirPlayReceiver, AirPlayReceiver>();
 
                     services.AddHostedService<AirPlayService>();
-                    services.AddSingleton(ctx =>
-                    {
-                        var config = ctx.GetService<IOptions<AirPlayReceiverConfig>>()?.Value ?? throw new ArgumentNullException("airplayreveicerconfig");
-                        var codecConfig = ctx.GetService<IOptions<CodecLibrariesConfig>>()?.Value ?? throw new ArgumentNullException("codeclibrariesconfig");
-
-                        return new AirPlayReceiver(config.Instance, codecConfig, config.AirTunesPort, config.AirPlayPort, config.DeviceMacAddress);
-                    });
                 })
                 .ConfigureLogging((hostContext, logging) =>
                 {
@@ -62,25 +74,6 @@ namespace AirPlay
                     logging.AddConsole();
                 });
 
-#if DUMP
-            // Replace '/Users/steebono/Desktop/dump/' in all source codes w/ your path
-            if (!Directory.Exists("/Users/steebono/Desktop/dump/"))
-            {
-                Directory.CreateDirectory("/Users/steebono/Desktop/dump/");
-            }
-            if (!Directory.Exists("/Users/steebono/Desktop/dump/frames/"))
-            {
-                Directory.CreateDirectory("/Users/steebono/Desktop/dump/frames/");
-            }
-            if (!Directory.Exists("/Users/steebono/Desktop/dump/out/"))
-            {
-                Directory.CreateDirectory("/Users/steebono/Desktop/dump/out/");
-            }
-            if (!Directory.Exists("/Users/steebono/Desktop/dump/pcm/"))
-            {
-                Directory.CreateDirectory("/Users/steebono/Desktop/dump/pcm/");
-            }
-#endif
             await builder.RunConsoleAsync();
         }
     }

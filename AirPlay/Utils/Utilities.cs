@@ -2,11 +2,18 @@
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace AirPlay.Utils
 {
     public static class Utilities
     {
+        public const string PAIR_VERIFY_AES_KEY = "Pair-Verify-AES-Key";
+        public const string PAIR_VERIFY_AES_IV = "Pair-Verify-AES-IV";
+
         public static byte[] CopyOfRange(byte[] src, int start, int end)
         {
             int len = end - start;
@@ -67,6 +74,28 @@ namespace AirPlay.Utils
             bwl.Write(tot);
 
             return stream.ToArray();
+        }
+
+        public static IBufferedCipher InitializeChiper(byte[] ecdhShared)
+        {
+            var pairverifyaeskey = Encoding.UTF8.GetBytes(PAIR_VERIFY_AES_KEY);
+            var pairverifyaesiv = Encoding.UTF8.GetBytes(PAIR_VERIFY_AES_IV);
+
+            byte[] digestAesKey = Utilities.Hash(pairverifyaeskey, ecdhShared);
+            byte[] sharedSecretSha512AesKey = Utilities.CopyOfRange(digestAesKey, 0, 16);
+
+            byte[] digestAesIv = Utilities.Hash(pairverifyaesiv, ecdhShared);
+
+            byte[] sharedSecretSha512AesIv = Utilities.CopyOfRange(digestAesIv, 0, 16);
+
+            var aesCipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
+
+            KeyParameter keyParameter = ParameterUtilities.CreateKeyParameter("AES", sharedSecretSha512AesKey);
+            var cipherParameters = new ParametersWithIV(keyParameter, sharedSecretSha512AesIv, 0, sharedSecretSha512AesIv.Length);
+
+            aesCipher.Init(true, cipherParameters);
+
+            return aesCipher;
         }
     }
 }

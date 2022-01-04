@@ -29,7 +29,8 @@ namespace AirPlay.Models
         public AudioFormat AudioFormat { get; set; } = AudioFormat.Unknown;
 
         public MirroringListener MirroringListener = null;
-        public  AudioListener AudioControlListener = null;
+        public StreamingListener StreamingListener = null;
+        public AudioListener AudioControlListener = null;
 
         public byte[] DecryptedAesKey { get; set; } = null;
         public byte[] SpsPps  { get; set; } = null;

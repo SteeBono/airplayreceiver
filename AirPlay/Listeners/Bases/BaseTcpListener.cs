@@ -49,6 +49,7 @@ namespace AirPlay.Listeners
         {
             return Task.CompletedTask;
         }
+
         public virtual Task OnRawReceivedAsync(TcpClient client, NetworkStream stream, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
@@ -182,8 +183,8 @@ namespace AirPlay.Listeners
                 }
             }
         }
-        
-        private async Task SendResponseAsync (NetworkStream stream, Response response)
+
+        private async Task SendResponseAsync(NetworkStream stream, Response response)
         {
             var format = $"{response.GetProtocol()} {(int)response.StatusCode} {response.StatusCode.ToString().ToUpperInvariant()}\r\n";
 

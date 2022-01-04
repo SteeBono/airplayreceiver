@@ -1,5 +1,7 @@
-﻿using AirPlay.Utils;
+﻿using AirPlay.Models.Configs;
+using AirPlay.Utils;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,17 +12,43 @@ namespace AirPlay
 {
     public class AirPlayService : IHostedService, IDisposable
     {
-        private readonly AirPlayReceiver _airPlayReceiver;
+        private readonly IAirPlayReceiver _airPlayReceiver;
+        private readonly DumpConfig _dConfig;
 
         private List<byte> _audiobuf;
 
-        public AirPlayService(AirPlayReceiver airPlayReceiver)
+        public AirPlayService(IAirPlayReceiver airPlayReceiver, IOptions<DumpConfig> dConfig)
         {
             _airPlayReceiver = airPlayReceiver ?? throw new ArgumentNullException(nameof(airPlayReceiver));
+            _dConfig = dConfig?.Value ?? throw new ArgumentNullException(nameof(dConfig));
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+#if DUMP
+            var bPath = _dConfig.Path;
+            var fPath = Path.Combine(bPath, "frames/");
+            var oPath = Path.Combine(bPath, "out/");
+            var pPath = Path.Combine(bPath, "pcm/");
+
+            if (!Directory.Exists(bPath))
+            {
+                Directory.CreateDirectory(bPath);
+            }
+            if (!Directory.Exists(fPath))
+            {
+                Directory.CreateDirectory(fPath);
+            }
+            if (!Directory.Exists(oPath))
+            {
+                Directory.CreateDirectory(oPath);
+            }
+            if (!Directory.Exists(pPath))
+            {
+                Directory.CreateDirectory(pPath);
+            }
+#endif
+
             await _airPlayReceiver.StartListeners(cancellationToken);
             await _airPlayReceiver.StartMdnsAsync().ConfigureAwait(false);
 
@@ -34,9 +62,9 @@ namespace AirPlay
             {
                 // DO SOMETHING WITH VIDEO DATA..
 #if DUMP
-                using (FileStream _writer = new FileStream("/Users/steebono/Desktop/dump/dump.h264", FileMode.Append))
+                using (FileStream writer = new FileStream($"{bPath}dump.h264", FileMode.Append))
                 {
-                    _writer.Write(e.Data, 0, e.Length);
+                    writer.Write(e.Data, 0, e.Length);
                 }
 #endif
             };
@@ -55,15 +83,16 @@ namespace AirPlay
         {
 #if DUMP
             // DUMP WAV AUDIO
-            using (var wr = new FileStream("/Users/steebono/Desktop/dump/dequeued.wav", FileMode.Create))
+            var bPath = _dConfig.Path;
+            using (var wr = new FileStream($"{bPath}dequeued.wav", FileMode.Create))
             {
                 var header = Utilities.WriteWavHeader(2, 44100, 16, (uint)_audiobuf.Count);
                 wr.Write(header, 0, header.Length);
             }
 
-            using (FileStream _writer = new FileStream("/Users/steebono/Desktop/dump/dequeued.wav", FileMode.Append))
+            using (FileStream writer = new FileStream($"{bPath}dequeued.wav", FileMode.Append))
             {
-                _writer.Write(_audiobuf.ToArray(), 0, _audiobuf.Count);
+                writer.Write(_audiobuf.ToArray(), 0, _audiobuf.Count);
             }
 #endif
             return Task.CompletedTask;

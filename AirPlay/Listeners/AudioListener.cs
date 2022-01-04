@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AirPlay.Models;
@@ -38,13 +33,15 @@ namespace AirPlay.Listeners
         private RaopBuffer _raopBuffer;
         private Socket _cSocket;
 
-        private readonly CodecLibrariesConfig _config;
+        private readonly CodecLibrariesConfig _clConfig;
+        private readonly DumpConfig _dConfig;
 
-        public AudioListener(IRtspReceiver receiver, string sessionId, ushort cport, ushort dport, CodecLibrariesConfig config) : base(cport, dport)
+        public AudioListener(IRtspReceiver receiver, string sessionId, ushort cport, ushort dport, CodecLibrariesConfig clConfig, DumpConfig dConfig) : base(cport, dport)
         {
-            _receiver = receiver;
-            _sessionId = sessionId;
-            _config = config;
+            _receiver = receiver ?? throw new ArgumentNullException(nameof(receiver));
+            _sessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
+            _clConfig = clConfig ?? throw new ArgumentNullException(nameof(clConfig));
+            _dConfig = dConfig ?? throw new ArgumentNullException(nameof(dConfig));
 
             _raopBuffer = RaopBufferInit();
             _aesCbcDecrypt = CipherUtilities.GetCipher("AES/CBC/NoPadding");
@@ -298,7 +295,8 @@ namespace AirPlay.Listeners
 
 #if DUMP
             /* RAW -> DUMP */
-            File.WriteAllBytes($"/Users/steebono/Desktop/dump/frames/raw_{seqnum}", raw);
+            var fPath = Path.Combine(_dConfig.Path, "frames/");
+            File.WriteAllBytes($"{fPath}raw_{seqnum}", raw);
 #endif
             /* RAW -> PCM */
             var length = _decoder.GetOutputStreamLength();
@@ -312,10 +310,11 @@ namespace AirPlay.Listeners
             }
 
 #if DUMP
+            var pPath = Path.Combine(_dConfig.Path, "pcm/");
             Console.WriteLine($"RES: {res}");
             Console.WriteLine($"PCM: {output.Length}");
             Console.WriteLine($"LNG: {length}");
-            File.WriteAllBytes($"/Users/steebono/Desktop/dump/pcm/raw_{seqnum}", output);
+            File.WriteAllBytes($"{pPath}raw_{seqnum}", output);
 #endif
             Array.Copy(output, 0, entry.AudioBuffer, 0, output.Length);
             entry.AudioBufferLen = output.Length;
@@ -491,7 +490,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new ALACDecoder(_config.ALACLibPath);
+                _decoder = new ALACDecoder(_clConfig.ALACLibPath);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else if (audioFormat == AudioFormat.AAC)
@@ -504,7 +503,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new AACDecoder(_config.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_AAC_MAIN, 1);
+                _decoder = new AACDecoder(_clConfig.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_AAC_MAIN, 1);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else if(audioFormat == AudioFormat.AAC_ELD)
@@ -517,7 +516,7 @@ namespace AirPlay.Listeners
                 var bitDepth = 16;
                 var sampleRate = 44100;
 
-                _decoder = new AACDecoder(_config.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_ER_AAC_ELD, 1);
+                _decoder = new AACDecoder(_clConfig.AACLibPath, TransportType.TT_MP4_RAW, AudioObjectType.AOT_ER_AAC_ELD, 1);
                 _decoder.Config(sampleRate, numChannels, bitDepth, frameLength);
             }
             else

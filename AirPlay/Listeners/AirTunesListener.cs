@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Plists;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -15,17 +14,11 @@ using AirPlay.Models.Enums;
 using AirPlay.Services.Implementations;
 using AirPlay.Utils;
 using org.whispersystems.curve25519;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 
 namespace AirPlay.Listeners
 {
     public class AirTunesListener : BaseTcpListener
     {
-        public const string PAIR_VERIFY_AES_KEY = "Pair-Verify-AES-Key";
-        public const string PAIR_VERIFY_AES_IV = "Pair-Verify-AES-IV";
-
         private readonly IRtspReceiver _receiver;
         private readonly ushort _airTunesPort;
         private readonly ushort _airPlayPort;
@@ -40,17 +33,20 @@ namespace AirPlay.Listeners
             new byte[] { 0x46,0x50,0x4c,0x59,0x03,0x01,0x02,0x00,0x00,0x00,0x00,0x82,0x02,0x03,0x90,0x01,0xe1,0x72,0x7e,0x0f,0x57,0xf9,0xf5,0x88,0x0d,0xb1,0x04,0xa6,0x25,0x7a,0x23,0xf5,0xcf,0xff,0x1a,0xbb,0xe1,0xe9,0x30,0x45,0x25,0x1a,0xfb,0x97,0xeb,0x9f,0xc0,0x01,0x1e,0xbe,0x0f,0x3a,0x81,0xdf,0x5b,0x69,0x1d,0x76,0xac,0xb2,0xf7,0xa5,0xc7,0x08,0xe3,0xd3,0x28,0xf5,0x6b,0xb3,0x9d,0xbd,0xe5,0xf2,0x9c,0x8a,0x17,0xf4,0x81,0x48,0x7e,0x3a,0xe8,0x63,0xc6,0x78,0x32,0x54,0x22,0xe6,0xf7,0x8e,0x16,0x6d,0x18,0xaa,0x7f,0xd6,0x36,0x25,0x8b,0xce,0x28,0x72,0x6f,0x66,0x1f,0x73,0x88,0x93,0xce,0x44,0x31,0x1e,0x4b,0xe6,0xc0,0x53,0x51,0x93,0xe5,0xef,0x72,0xe8,0x68,0x62,0x33,0x72,0x9c,0x22,0x7d,0x82,0x0c,0x99,0x94,0x45,0xd8,0x92,0x46,0xc8,0xc3,0x59}
         };
         private readonly CodecLibrariesConfig _codecConfig;
+        private readonly DumpConfig _dumpConfig;
 
-        public AirTunesListener(IRtspReceiver receiver, ushort port, ushort airPlayPort, CodecLibrariesConfig codecConfig) : base(port)
+        public AirTunesListener(IRtspReceiver receiver, ushort port, ushort airPlayPort, CodecLibrariesConfig codecConfig, DumpConfig dumpConfig) : base(port)
         {
-            _receiver = receiver;
             _airTunesPort = port;
             _airPlayPort = airPlayPort;
-            _codecConfig = codecConfig;
+            _receiver = receiver ?? throw new ArgumentNullException(nameof(receiver));
+            _codecConfig = codecConfig ?? throw new ArgumentNullException(nameof(codecConfig));
+            _dumpConfig = dumpConfig ?? throw new ArgumentNullException(nameof(dumpConfig));
 
             // First time that we instantiate AirPlayListener we must create a ED25519 KeyPair
-            var seed = new byte[32];
-            RNGCryptoServiceProvider.Create().GetBytes(seed);
+            // var seed = new byte[32];
+            // RNGCryptoServiceProvider.Create().GetBytes(seed);
+            var seed = Enumerable.Range(0, 32).Select(r => (byte)r).ToArray();
             Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] publicKey, out byte[] expandedPrivateKey, seed);
 
             _publicKey = publicKey;
@@ -178,7 +174,7 @@ namespace AirPlay.Listeners
 
                         session.EcdhShared = curve25519.calculateAgreement(ecdhPrivateKey, session.EcdhTheirs);
 
-                        var aesCtr128Encrypt = InitializeChiper(session.EcdhShared);
+                        var aesCtr128Encrypt = Utilities.InitializeChiper(session.EcdhShared);
 
                         byte[] dataToSign = new byte[64];
                         Array.Copy(session.EcdhOurs, 0, dataToSign, 0, 32);
@@ -200,7 +196,7 @@ namespace AirPlay.Listeners
                         reader.ReadBytes(3);
                         var signature = reader.ReadBytes(64);
 
-                        var aesCtr128Encrypt = InitializeChiper(session.EcdhShared);
+                        var aesCtr128Encrypt = Utilities.InitializeChiper(session.EcdhShared);
 
                         var signatureBuffer = new byte[64];
                         signatureBuffer = aesCtr128Encrypt.ProcessBytes(signatureBuffer);
@@ -437,10 +433,18 @@ namespace AirPlay.Listeners
 
                             session.MirroringListener = mirroring;
                         }
+                        if (session.FairPlayReady && (!session.MirroringSession.HasValue || !session.MirroringSession.Value))
+                        {
+                            // Start 'StreamingListener' (handle streaming url)
+                            var streaming = new StreamingListener(_receiver, session.SessionId, _expandedPrivateKey, _airPlayPort);
+                            await streaming.StartAsync(cancellationToken).ConfigureAwait(false);
+
+                            session.StreamingListener = streaming;
+                        }
                         if (session.FairPlayReady && session.AudioSessionReady && session.AudioControlListener == null)
                         {
                             // Start 'AudioListener' (handle PCM/AAC/ALAC data received from iOS/macOS
-                            var control = new AudioListener(_receiver, session.SessionId, 7002, 7003, _codecConfig);
+                            var control = new AudioListener(_receiver, session.SessionId, 7002, 7003, _codecConfig, _dumpConfig);
                             await control.StartAsync(cancellationToken).ConfigureAwait(false);
 
                             session.AudioControlListener = control;
@@ -573,28 +577,6 @@ namespace AirPlay.Listeners
 
             // Save current session
             await SessionManager.Current.CreateOrUpdateSessionAsync(sessionId, session);
-        }
-
-        private IBufferedCipher InitializeChiper(byte[] ecdhShared)
-        {
-            var pairverifyaeskey = Encoding.UTF8.GetBytes(PAIR_VERIFY_AES_KEY);
-            var pairverifyaesiv = Encoding.UTF8.GetBytes(PAIR_VERIFY_AES_IV);
-
-            byte[] digestAesKey = Utilities.Hash(pairverifyaeskey, ecdhShared);
-            byte[] sharedSecretSha512AesKey = Utilities.CopyOfRange(digestAesKey, 0, 16);
-
-            byte[] digestAesIv = Utilities.Hash(pairverifyaesiv, ecdhShared);
-
-            byte[] sharedSecretSha512AesIv = Utilities.CopyOfRange(digestAesIv, 0, 16);
-
-            var aesCipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
-
-            KeyParameter keyParameter = ParameterUtilities.CreateKeyParameter("AES", sharedSecretSha512AesKey);
-            var cipherParameters = new ParametersWithIV(keyParameter, sharedSecretSha512AesIv, 0, sharedSecretSha512AesIv.Length);
-
-            aesCipher.Init(true, cipherParameters);
-
-            return aesCipher;
         }
 
         private string GetAudioFormatDescription(int format)

@@ -9,10 +9,11 @@ using AirPlay.Listeners;
 using AirPlay.Models;
 using AirPlay.Models.Configs;
 using Makaretu.Dns;
+using Microsoft.Extensions.Options;
 
 namespace AirPlay
 {
-    public class AirPlayReceiver : IRtspReceiver
+    public class AirPlayReceiver : IRtspReceiver, IAirPlayReceiver
     {
         public event EventHandler<decimal> OnSetVolumeReceived;
         public event EventHandler<H264Data> OnH264DataReceived;
@@ -23,19 +24,22 @@ namespace AirPlay
 
         private MulticastService _mdns = null;
         private AirTunesListener _airTunesListener = null;
-        private readonly string _instance = string.Empty;
+        private readonly string _instance;
         private readonly ushort _airTunesPort;
         private readonly ushort _airPlayPort;
         private readonly string _deviceId;
 
-        public AirPlayReceiver(string instance, CodecLibrariesConfig codecConfig, ushort airTunesPort = 5000, ushort airPlayPort = 7000, string macAddress = "11:22:33:44:55:66")
+        public AirPlayReceiver(IOptions<AirPlayReceiverConfig> aprConfig, IOptions<CodecLibrariesConfig> codecConfig, IOptions<DumpConfig> dumpConfig)
         {
-            _instance = instance;
-            _airTunesPort = airTunesPort;
-            _airPlayPort = airPlayPort;
-            _deviceId = macAddress;
+            _airTunesPort = aprConfig?.Value?.AirTunesPort ?? 5000;
+            _airPlayPort = aprConfig?.Value?.AirPlayPort ?? 7000;
+            _deviceId = aprConfig?.Value?.DeviceMacAddress ?? "11:22:33:44:55:66";
+            _instance = aprConfig?.Value?.Instance ?? throw new ArgumentNullException("apr.instance");
 
-            _airTunesListener = new AirTunesListener(this, _airTunesPort, _airPlayPort, codecConfig);
+            var clConfig = codecConfig?.Value ?? throw new ArgumentNullException(nameof(codecConfig));
+            var dConfig = dumpConfig?.Value ?? throw new ArgumentNullException(nameof(dumpConfig));
+
+            _airTunesListener = new AirTunesListener(this, _airTunesPort, _airPlayPort, clConfig, dConfig);
         }
 
         public async Task StartListeners(CancellationToken cancellationToken)
