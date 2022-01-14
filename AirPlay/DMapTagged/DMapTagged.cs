@@ -962,8 +962,8 @@ namespace AirPlay.DmapTagged
             },
             {
                 "mtco",
-                new ContentTypeItem { Description = "",
-                Name = "dmap.specifiedtotalcount number of items in response to a request",
+                new ContentTypeItem { Description = "number of items in response to a request",
+                Name = "dmap.specifiedtotalcount",
                 Type = "int" }
             },
             {
