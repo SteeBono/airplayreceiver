@@ -135,6 +135,8 @@ namespace AirPlay.Listeners
                     }
                 }
 
+                // Fix issue #24
+                await Task.Delay(1);
                 readStart = 0;
                 header = null;
                 headerBuffer = new byte[128];
