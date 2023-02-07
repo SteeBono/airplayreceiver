@@ -174,7 +174,7 @@ namespace System.Runtime.Serialization.Plists
         {
             using (Stream stream = File.OpenRead(path))
             {
-                return this.ReadObject<T>(path);
+                return this.ReadObject<T>(stream);
             }
         }
 

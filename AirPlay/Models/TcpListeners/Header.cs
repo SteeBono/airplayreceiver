@@ -68,7 +68,7 @@ namespace AirPlay.Models
 
             foreach (var val in vals)
             {
-                var bytes = hex.HexToBytes();
+                var bytes = val.HexToBytes();
                 var hVal = Encoding.ASCII.GetString(bytes).Trim();
                 _values.Add(hVal);
             }

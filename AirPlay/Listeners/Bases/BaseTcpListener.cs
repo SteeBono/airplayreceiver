@@ -116,8 +116,9 @@ namespace AirPlay.Listeners
                     try
                     {
                         var buffer = new byte[1024];
-                        retBytes += stream.Read(buffer, 0, buffer.Length);
-                        raw += string.Join(string.Empty, buffer.Take(retBytes).Select(b => b.ToString("X2")));
+                        var readCount = stream.Read(buffer, 0, buffer.Length);
+                        retBytes += readCount;
+                        raw += string.Join(string.Empty, buffer.Take(readCount).Select(b => b.ToString("X2")));
 
                         // Wait for other possible data
                         await Task.Delay(10);
